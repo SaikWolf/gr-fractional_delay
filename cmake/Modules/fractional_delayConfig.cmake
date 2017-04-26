@@ -1,0 +1,30 @@
+INCLUDE(FindPkgConfig)
+PKG_CHECK_MODULES(PC_FRACTIONAL_DELAY fractional_delay)
+
+FIND_PATH(
+    FRACTIONAL_DELAY_INCLUDE_DIRS
+    NAMES fractional_delay/api.h
+    HINTS $ENV{FRACTIONAL_DELAY_DIR}/include
+        ${PC_FRACTIONAL_DELAY_INCLUDEDIR}
+    PATHS ${CMAKE_INSTALL_PREFIX}/include
+          /usr/local/include
+          /usr/include
+)
+
+FIND_LIBRARY(
+    FRACTIONAL_DELAY_LIBRARIES
+    NAMES gnuradio-fractional_delay
+    HINTS $ENV{FRACTIONAL_DELAY_DIR}/lib
+        ${PC_FRACTIONAL_DELAY_LIBDIR}
+    PATHS ${CMAKE_INSTALL_PREFIX}/lib
+          ${CMAKE_INSTALL_PREFIX}/lib64
+          /usr/local/lib
+          /usr/local/lib64
+          /usr/lib
+          /usr/lib64
+)
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(FRACTIONAL_DELAY DEFAULT_MSG FRACTIONAL_DELAY_LIBRARIES FRACTIONAL_DELAY_INCLUDE_DIRS)
+MARK_AS_ADVANCED(FRACTIONAL_DELAY_LIBRARIES FRACTIONAL_DELAY_INCLUDE_DIRS)
+

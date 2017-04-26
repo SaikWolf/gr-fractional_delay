@@ -1,0 +1,7 @@
+/*!
+ * \defgroup block GNU Radio FRACTIONAL_DELAY C++ Signal Processing Blocks
+ * \brief All C++ blocks that can be used from the FRACTIONAL_DELAY GNU Radio
+ *        module are listed here or in the subcategories below.
+ *
+ */
+
