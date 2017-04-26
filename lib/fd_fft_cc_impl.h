@@ -22,11 +22,8 @@
 #define INCLUDED_FRACTIONAL_DELAY_FD_FFT_CC_IMPL_H
 
 #include <fractional_delay/fd_fft_cc.h>
+#include <boost/math/special_functions/sinc.hpp>
 #include <gnuradio/filter/fir_filter.h>
-#include <gnuradio/filter/firdes.h>
-#include <gnuradio/fft/fft.h>
-#include <volk/volk.h>
-#include <fftw3.h>
 #include <vector>
 
 namespace gr {
@@ -36,42 +33,32 @@ namespace gr {
     {
      private:
       typedef std::complex<float> complexf;
-      size_t d_block_size;
-      size_t d_fft_size;
       float  d_fd;//fractional_delay
-
-      //state machine needs
-      size_t d_state;
-      size_t d_bip;//buff input pointer
-      size_t d_bop;//buff_output pointer
+      gr::filter::firdes::win_type d_wt;
+      bool d_updated;
 
       //kernels
       std::vector<float>    d_window;
-      std::vector<float>    d_window_inv;
-      gr::fft::fft_complex* d_fft;
-      gr::fft::fft_complex* d_ifft;
-      std::vector<complexf> d_rotator;
 
-      std::vector<gr::filter::kernel::fir_filter_ccf*> d_interp;
-      gr::filter::kernel::fir_filter_ccf* d_decim;
-
-      std::vector<float> d_taps_interp;
-      std::vector<float> d_taps_decim;
+      std::vector<float> d_proto;
+      std::vector<float> d_taps;
+      gr::filter::kernel::fir_filter_ccf* d_filt;
 
       void install_taps();
-
-      //volk things
-      int d_align;
+      void gen_proto();
 
      public:
-      fd_fft_cc_impl(size_t block_size, float fd,
-                     const std::vector<float> &window);
+      fd_fft_cc_impl(float fd, int wt);
       ~fd_fft_cc_impl();
 
       // Where all the action really happens
       int work(int noutput_items,
                 gr_vector_const_void_star &input_items,
                 gr_vector_void_star &output_items);
+
+      void set_taps(float fd, int wt);
+      void set_fd(float fd);
+      void set_window(int wt);
     };
 
   } // namespace fractional_delay

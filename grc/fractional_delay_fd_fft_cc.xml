@@ -1,38 +1,72 @@
 <?xml version="1.0"?>
 <block>
-  <name>fd_fft_cc</name>
+  <name>Fractional Delay</name>
   <key>fractional_delay_fd_fft_cc</key>
-  <category>[fractional_delay]</category>
+  <category>[Fractional Delay]</category>
   <import>import fractional_delay</import>
-  <make>fractional_delay.fd_fft_cc($block_size, $fft_size, $fd)</make>
-  <!-- Make one 'param' node for every Parameter you want settable from the GUI.
-       Sub-nodes:
-       * name
-       * key (makes the value accessible as $keyname, e.g. in the make node)
-       * type -->
-  <param>
-    <name>...</name>
-    <key>...</key>
-    <type>...</type>
-  </param>
+	<import>from gnuradio.filter import firdes</import>
+  <make>fractional_delay.fd_fft_cc($fd, $wt)</make>
+  <callback>set_fd($fd)</callback>
+  <callback>set_window($wt)</callback>
 
-  <!-- Make one 'sink' node per input. Sub-nodes:
-       * name (an identifier for the GUI)
-       * type
-       * vlen
-       * optional (set to 1 for optional inputs) -->
+	<param>
+		<name>Fractional Delay</name>
+		<key>fd</key>
+		<value>0.0</value>
+		<type>real</type>
+	</param>
+	<param>
+		<name>Window Type</name>
+		<key>wt</key>
+		<value>firdes.WIN_NONE</value>
+		<type>enum</type>
+    <option>
+      <name>None</name>
+      <key>firdes.WIN_NONE</key>
+    </option>
+    <option>
+      <name>Hamming</name>
+      <key>firdes.WIN_HAMMING</key>
+    </option>
+    <option>
+      <name>Hann</name>
+      <key>firdes.WIN_HANN</key>
+    </option>
+    <option>
+      <name>Blackman</name>
+      <key>firdes.WIN_BLACKMAN</key>
+    </option>
+    <option>
+      <name>Rectangular</name>
+      <key>firdes.WIN_RECTANGULAR</key>
+    </option>
+    <option>
+      <name>Blackman-harris</name>
+      <key>firdes.WIN_BLACKMAN_hARRIS</key>
+    </option>
+    <option>
+      <name>Bartlett</name>
+      <key>firdes.WIN_BARTLETT</key>
+    </option>
+    <option>
+      <name>Flattop</name>
+      <key>firdes.WIN_FLATTOP</key>
+    </option>
+	</param>
+
   <sink>
     <name>in</name>
-    <type><!-- e.g. int, float, complex, byte, short, xxx_vector, ...--></type>
+    <type>complex</type>
   </sink>
 
-  <!-- Make one 'source' node per output. Sub-nodes:
-       * name (an identifier for the GUI)
-       * type
-       * vlen
-       * optional (set to 1 for optional inputs) -->
   <source>
     <name>out</name>
-    <type><!-- e.g. int, float, complex, byte, short, xxx_vector, ...--></type>
+    <type>complex</type>
   </source>
+
+  <doc>
+    This creates a fractional delay in time.
+    It comes at the cost of a 27 sample delay as well.
+    Range allowed from [-.5,.5] (samples).
+  </doc>
 </block>

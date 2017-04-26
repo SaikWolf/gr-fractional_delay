@@ -24,6 +24,7 @@
 
 #include <fractional_delay/api.h>
 #include <gnuradio/sync_block.h>
+#include <gnuradio/filter/firdes.h>
 
 namespace gr {
   namespace fractional_delay {
@@ -46,8 +47,11 @@ namespace gr {
        * class. fractional_delay::fd_fft_cc::make is the public interface for
        * creating new instances.
        */
-      static sptr make(size_t block_size, float fd,
-                       const std::vector<float> &window);
+      static sptr make(float fd, int wt);
+
+      virtual void set_taps(float fd, int wt)=0;
+      virtual void set_fd(float fd)=0;
+      virtual void set_window(int wt)=0;
     };
 
   } // namespace fractional_delay
