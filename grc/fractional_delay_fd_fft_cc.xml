@@ -68,5 +68,7 @@
     This creates a fractional delay in time.
     It comes at the cost of a 27 sample delay as well.
     Range allowed from [-.5,.5] (samples).
+
+    At some point, should make this have an arbitrary sample delay, but not yet.
   </doc>
 </block>

@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
 /*
- * Copyright 2017 <+YOU OR YOUR COMPANY+>.
+ * Copyright 2017 Bill Clark.
  *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,13 @@ namespace gr {
   namespace fractional_delay {
 
     /*!
-     * \brief <+description of block+>
+     * \brief Fractional Delay FIR filter
+     * Utilizes the FFT/Sinc interpolation approach.
+     * For now, the fractional delay comes at the
+     * cost of a 27 sample delay as well, purely for
+     * implementation ease. It is within reason for the
+     * the delay to >= 5 samples (worse performance as
+     * delay approaches 5 samples however).
      * \ingroup fractional_delay
      *
      */
@@ -49,8 +55,29 @@ namespace gr {
        */
       static sptr make(float fd, int wt);
 
+      /*!
+       * \brief Update both the fractional_delay and window type.
+       *
+       * Update both the fractional_delay and window type.
+       * (Works on the fly since the prototype filter doesn't change)
+       */
       virtual void set_taps(float fd, int wt)=0;
+
+      /*!
+       * \brief Update the fractional_delay.
+       *
+       * Update the fractional_delay.
+       * (Works on the fly since the prototype filter doesn't change)
+       */
       virtual void set_fd(float fd)=0;
+
+      /*!
+       * \brief Update the window type.
+       *
+       * Update window type.
+       * (Works on the fly since the prototype filter doesn't change)
+       * (Little net effect in current implementation has been seen)
+       */
       virtual void set_window(int wt)=0;
     };
 
