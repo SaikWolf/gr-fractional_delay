@@ -48,9 +48,11 @@ namespace gr {
               gr::io_signature::make(1, 1, sizeof(complexf))),
         d_fd(fd)
     {
-      if((d_fd > 0.5)||(d_fd < -0.5)){
-        throw std::runtime_error(
-          "fd_fft_cc: fractional delay must be within [-0.5,0.5]\n");
+      while(d_fd < -.5){
+        d_fd += 1.;
+      }
+      while(d_fd > .5){
+        d_fd -= 1.;
       }
       gen_proto();
       set_window(wt);
@@ -70,17 +72,19 @@ namespace gr {
 
     void
     fd_fft_cc_impl::gen_proto(){
-      d_proto = gr::filter::firdes::low_pass_2(1,1,0.5,0.05,61,
-                        gr::filter::firdes::WIN_BLACKMAN_hARRIS);
+      //d_proto = gr::filter::firdes::low_pass_2(1,1,0.5,0.05,61,
+      ///                  gr::filter::firdes::WIN_BLACKMAN_hARRIS);
+      d_proto = std::vector<float>(101,0.);
+      d_proto[49] = 1.;
       d_updated = true;
     }
 
     void
     fd_fft_cc_impl::install_taps(){
-      if((d_fd>-1.19e-07)&&(d_fd<1.19e-07)){
-        d_taps = std::vector<float>(d_proto.begin(), d_proto.end());
-      }
-      else{
+      //if((d_fd>-1.19e-07)&&(d_fd<1.19e-07)){
+      //  d_taps = std::vector<float>(d_proto.begin(), d_proto.end());
+      //}
+      //else{
         d_taps = std::vector<float>(d_proto.size(),0.);
         if(d_window.size()){
           for(int idx = 0; idx < d_proto.size(); idx++){
@@ -88,6 +92,7 @@ namespace gr {
               d_taps[idx] += d_proto[ind]*d_window[ind]*
                   boost::math::sinc_pi(M_PI*(float(idx)-float(ind) - d_fd));
             }
+            d_taps[idx] *= d_window[idx];
           }
         }
         else{
@@ -98,7 +103,7 @@ namespace gr {
             }
           }
         }
-      }
+      //}
       d_filt->set_taps(d_taps);
       set_history(d_taps.size());
       d_updated = false;
@@ -112,6 +117,12 @@ namespace gr {
 
     void
     fd_fft_cc_impl::set_fd(float fd) {
+      while(fd < -.5){
+        fd += 1.;
+      }
+      while(fd > .5){
+        fd -= 1.;
+      }
       d_fd = fd;
       d_updated = true;
     }

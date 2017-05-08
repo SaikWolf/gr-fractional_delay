@@ -21,6 +21,7 @@
 #ifndef INCLUDED_FRACTIONAL_DELAY_FD_FFT_CC_IMPL_H
 #define INCLUDED_FRACTIONAL_DELAY_FD_FFT_CC_IMPL_H
 
+#include <fractional_delay/tap_gen.h>
 #include <fractional_delay/fd_fft_cc.h>
 #include <boost/math/special_functions/sinc.hpp>
 #include <gnuradio/filter/fir_filter.h>

@@ -8,9 +8,10 @@
 %include "fractional_delay_swig_doc.i"
 
 %{
+#include "fractional_delay/tap_gen.h"
 #include "fractional_delay/fd_fft_cc.h"
 %}
 
-
+%include "fractional_delay/tap_gen.h"
 %include "fractional_delay/fd_fft_cc.h"
 GR_SWIG_BLOCK_MAGIC2(fractional_delay, fd_fft_cc);

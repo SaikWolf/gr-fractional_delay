@@ -22,10 +22,11 @@
 ########################################################################
 include(GrPlatform) #define LIB_SUFFIX
 
-include_directories(${Boost_INCLUDE_DIR})
+include_directories(${Boost_INCLUDE_DIR} ${EIGEN_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 list(APPEND fractional_delay_sources
+    tap_gen.cc
     fd_fft_cc_impl.cc
 )
 
@@ -80,4 +81,3 @@ GR_ADD_TEST(test_fractional_delay test-fractional_delay)
 ########################################################################
 message(STATUS "Using install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Building for version: ${VERSION} / ${LIBVER}")
-
