@@ -2,7 +2,7 @@
 <block>
   <name>Fractional Delay</name>
   <key>fractional_delay_fd_fft_cc</key>
-  <category>[Fractional Delay]</category>
+  <category>[SaikWolf]/Fractional Delay</category>
   <import>import fractional_delay</import>
 	<import>from gnuradio.filter import firdes</import>
   <make>fractional_delay.fd_fft_cc($fd, $wt)</make>
