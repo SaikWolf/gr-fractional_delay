@@ -31,4 +31,8 @@ except ImportError:
 	pass
 
 # import any pure python here
+from tap_augmentor import tap_augmentor
+#from tap_augmentor import tap_generator
+from tap_generator import tap_generator
 #
+

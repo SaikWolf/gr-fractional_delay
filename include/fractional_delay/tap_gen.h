@@ -72,6 +72,18 @@ namespace gr {
       gls_approx(double gain, double sampling_freq, double pass_freq,
         int ntaps, double fractional_delay);
 
+      static std::vector<double>
+      get_gls_Pinv_matrix(double sampling_freq, double pass_freq, int ntaps);
+
+      static std::vector<double>
+      get_gls_frac_delay_p(double sampling_freq, double pass_freq,
+                           int ntaps, double fractional_delay);
+
+      static std::vector<float>
+      gls_updatable(double gain, int ntaps,
+                    const std::vector<double> &Pinv_raw,
+                    const std::vector<double> &p_raw);
+
       static std::vector<float>
       lagrange_interp(double gain, int ntaps, double fractional_delay);
 

@@ -21,11 +21,11 @@
  #include <fractional_delay/tap_gen.h>
  #include <iostream>
 
- namespace gr{
-   namespace fractional_delay{
+namespace gr{
+  namespace fractional_delay{
 
-     typedef gr_complex complexf;
-     typedef gr_complexd complexd;
+    typedef gr_complex complexf;
+    typedef gr_complexd complexd;
 
     std::vector<float>
     tap_gen::sinc_interp(double gain, double sampling_freq, double pass_freq,
@@ -141,7 +141,8 @@
       Eigen::MatrixXd P = mapP;
       Eigen::VectorXd p = mapp;
 
-      Eigen::VectorXd x = P.colPivHouseholderQr().solve(p);
+      //Eigen::VectorXd x = P.colPivHouseholderQr().solve(p);
+      Eigen::VectorXd x = P.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(p);
 
       std::vector<double> x_raw( &x(0), &x(0) + ntaps );
       std::vector<float> taps( x_raw.begin(), x_raw.end() );
@@ -155,6 +156,112 @@
         taps[n] *= scale;
       }
       return taps;
+    }
+
+    std::vector<double>
+    tap_gen::get_gls_Pinv_matrix(double sampling_freq, double pass_freq, int ntaps)
+    {
+      int N = ntaps-1;
+      if(N>0){
+        double alpha = pass_freq/sampling_freq;
+        if(alpha > 0.5) alpha = 0.5;
+
+        std::vector<double> P_raw(ntaps*ntaps);
+
+        for(size_t k = 0; k < ntaps; k++){
+          for(size_t l = 0; l < ntaps; l++){
+            P_raw[k*ntaps+l] = 2.*alpha*
+                boost::math::sinc_pi(2.*M_PI*alpha*double(k-l));
+          }
+        }
+
+        Eigen::Map< Eigen::MatrixXd > mapP( &P_raw[0], ntaps, ntaps );
+        Eigen::MatrixXd P = mapP;
+
+        Eigen::MatrixXd Pinv = P.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(
+                      Eigen::MatrixXd::Identity(ntaps,ntaps));
+
+        std::vector<double> matrix(Pinv.data(), Pinv.data()+Pinv.size());
+
+        return matrix;
+      }
+      else{
+        std::vector<double> taps(0);
+        return taps;
+      }
+    }
+
+    std::vector<double>
+    tap_gen::get_gls_frac_delay_p(double sampling_freq, double pass_freq,
+                                  int ntaps, double fractional_delay)
+    {
+      double alpha = pass_freq/sampling_freq;
+      if(alpha > 0.5) alpha = 0.5;
+
+      double center;
+      double fd = std::fmod(fractional_delay,1.);
+      if(ntaps%2){
+        //odd
+        center = double(ntaps-1)/2.;
+      }
+      else{
+        //even
+        center = double(ntaps)/2.;
+      }
+      if(fractional_delay < 0.) center -= 1.;
+
+      std::vector<double> p_raw(ntaps);
+
+      for(size_t k = 0; k < ntaps; k++){
+        p_raw[k] = 2.*alpha*boost::math::sinc_pi(2.*M_PI*alpha*(double(k)-(center+fd)));
+      }
+
+      Eigen::Map< Eigen::VectorXd > mapp( &p_raw[0], ntaps );
+      Eigen::VectorXd p = mapp;
+
+      std::vector<double> augmentor( p.data(), p.data()+p.size() );
+      double m2(0.);
+      for(size_t n = 0; n < ntaps; n++){
+        m2 += augmentor[n]*augmentor[n];
+      }
+
+      double scaleM = std::sqrt(1./m2);
+      for(size_t n = 0; n < ntaps; n++){
+        augmentor[n] *= scaleM;
+      }
+
+      return augmentor;
+    }
+
+    std::vector<float>
+    tap_gen::gls_updatable(double gain, int ntaps,
+                           const std::vector<double> &Pinv_raw,
+                           const std::vector<double> &p_raw)
+    {
+      if((p_raw.size() == ntaps)&&(Pinv_raw.size() == ntaps*ntaps)){
+        Eigen::Map< const Eigen::MatrixXd > mapPinv( &Pinv_raw[0], ntaps, ntaps );
+        Eigen::MatrixXd Pinv = mapPinv;
+        Eigen::Map< const Eigen::VectorXd > mapp( &p_raw[0], ntaps );
+        Eigen::VectorXd p = mapp;
+
+        Eigen::VectorXd x = Pinv*p;
+        std::vector<double> x_raw( x.data(), x.data() + x.size() );
+        std::vector<float> taps( x_raw.begin(), x_raw.end() );
+        double m2(0.);
+        for(size_t n = 0; n < ntaps; n++){
+          m2 += taps[n]*taps[n];
+        }
+
+        double scaleM = std::sqrt(1./m2);
+        for(size_t n = 0; n < ntaps; n++){
+          taps[n] *= scaleM;
+        }
+        return taps;
+      }
+      else{
+        std::vector<float> taps(0);
+        return taps;
+      }
     }
 
     std::vector<float>
@@ -711,7 +818,7 @@
         return augmentor;
       }
       else{
-        std::vector<double> taps(0);
+        std::vector<double> taps(1,1.);
         return taps;
       }
     }
@@ -793,5 +900,5 @@
       }
     }
 
-   }
- }
+  }
+}
