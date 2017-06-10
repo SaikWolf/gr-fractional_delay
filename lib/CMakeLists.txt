@@ -24,11 +24,9 @@ include(GrPlatform) #define LIB_SUFFIX
 
 include_directories(${Boost_INCLUDE_DIR} ${EIGEN_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
-
 list(APPEND fractional_delay_sources
     tap_gen.cc
-    fd_fft_cc_impl.cc
-)
+    )
 
 set(fractional_delay_sources "${fractional_delay_sources}" PARENT_SCOPE)
 if(NOT fractional_delay_sources)

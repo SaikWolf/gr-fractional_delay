@@ -23,5 +23,5 @@
 install(FILES
     api.h
     tap_gen.h
-    fd_fft_cc.h DESTINATION include/fractional_delay
+    DESTINATION include/fractional_delay
 )
