@@ -300,9 +300,7 @@
           center = double(N)/2.;
           offset = N/2;
         }
-
         double D = center + fd;
-        std::cout << "D = " << center << " + " << fd << " = " << D << std::endl;
 
 
         std::vector<float> prototaps( proto.begin(), proto.end() );
@@ -388,28 +386,19 @@
             P_raw[k+l*ntaps] = Ckl*scale_w;
           }
         }
-        /*std::cout << "P = [";
-        for(size_t k = 0; k < ntaps; k++){
-          if(k==0){
-            std::cout << "[";
-          }
-          else{
-            std::cout << "; [";
-          }
-          std::cout << P_raw[k*ntaps];
-          for(size_t l = 1; l < ntaps; l++){
-            std::cout << ", " << P_raw[k + l*ntaps];
-          }
-          std::cout << " ]";
-        }
-        std::cout << " ];\n";*/
 
         Eigen::Map< Eigen::MatrixXd > mapP( &P_raw[0], ntaps, ntaps );
         Eigen::Map< Eigen::VectorXd > mapp( &p_raw[0], ntaps );
         Eigen::MatrixXd P = mapP;
         Eigen::VectorXd p = mapp;
+        Eigen::VectorXd x = P.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(p);
 
-        Eigen::VectorXd x = P.colPivHouseholderQr().solve(p);
+        //std::vector<double> Pinv_raw = get_aug_lms_Pinv_matrix(sampling_freq,
+        //          pass_freq, proto, resolution);
+        //Eigen::Map< Eigen::MatrixXd > mapPinv( &Pinv_raw[0], ntaps, ntaps );
+        //Eigen::MatrixXd Pinv = mapPinv;
+
+        //Eigen::VectorXd x = Pinv*p;
 
         std::vector<double> x_raw( x.data(), x.data()+x.size() );
         std::vector<float> augmentor( x_raw.begin(), x_raw.end() );
@@ -502,6 +491,301 @@
           taps[idx] *= scaleT;
         }
         return taps;
+      }
+      else{
+        std::vector<float> taps(0);
+        return taps;
+      }
+    }
+
+    std::vector<double>
+    tap_gen::get_aug_lms_Pinv_matrix(double sampling_freq, double pass_freq,
+                            const std::vector<float> &proto, int resolution)
+    {
+      int ntaps = proto.size();
+      int N = ntaps-1;
+      if(N){
+        double alpha = pass_freq/sampling_freq;
+
+        std::vector<float> prototaps( proto.begin(), proto.end() );
+        double p2(0.);
+        for(size_t n = 0; n < ntaps; n++){
+          p2 += prototaps[n]*prototaps[n];
+        }
+        double scaleP = std::sqrt(1./p2);
+        for(size_t n = 0; n < ntaps; n++){
+          prototaps[n] *= scaleP;
+        }
+
+        int nbins = resolution*ntaps;
+        gr::fft::fft_complex* to_spec = new gr::fft::fft_complex(nbins, true);
+
+        complexf *ib1 = to_spec->get_inbuf();
+        complexf *ob1 = to_spec->get_outbuf();
+
+        memset( ib1, 0, nbins*sizeof(complexf) );
+        memset( ob1, 0, nbins*sizeof(complexf) );
+
+        std::vector<double> mag_spec0(nbins);
+        std::vector<double> mag_specA(nbins);
+
+        for(size_t idx = 0; idx < ntaps; idx++){
+          ib1[idx] = complexf(prototaps[idx],0.);
+        }
+        to_spec->execute();
+
+        for(size_t idx = 0; idx < nbins; idx++){
+          mag_spec0[idx] = double((ob1[idx]*std::conj(ob1[idx])).real());
+        }
+
+        ///////////fft shift needed
+        size_t pointA = int(std::ceil(float(nbins)/2.));
+        memcpy( &mag_specA[0], &mag_spec0[pointA], (nbins-pointA)*sizeof(double) );
+        memcpy( &mag_specA[pointA], &mag_spec0[0], (pointA)*sizeof(double) );
+        ///////////
+
+        double incrmt = (2*M_PI - 1./double(nbins))/double(nbins-1);
+        std::vector<double> omegaA(nbins,0.);
+        for(size_t idx = 0; idx < nbins; idx++){
+          omegaA[idx] = -M_PI + double(idx)*(incrmt);
+        }
+
+        int start_at = int(std::max(0.,
+                      round(double(nbins)*(1.-2*alpha)/2.)));
+        int end_at = int(std::min(double(nbins),
+                      round(double(nbins)*(1.-(1.-2*alpha)/2.))));//one shy
+
+        std::vector<double> omegaB( omegaA.begin()+start_at, omegaA.begin()+end_at );
+        std::vector<double> mag_specB( mag_specA.begin()+start_at, mag_specA.begin()+end_at );
+
+        int chk = omegaB.size();
+        std::vector<complexd> ek(chk);
+        std::vector<complexd> el(chk);
+
+        std::vector<double> P_raw(ntaps*ntaps);
+
+        double Ckl(0.),pk(0.),scale_w(1./double(chk));
+        for(int k = 0; k < ntaps; k++){
+          for(size_t w = 0; w < chk; w++){
+            ek[w] = std::exp(complexd(0.,-k*omegaB[w]));
+          }
+          for(int l = 0; l < ntaps; l++){
+            Ckl = 0.;
+            for(size_t w = 0; w < chk; w++){
+              el[w] = std::exp(complexd(0.,l*omegaB[w]));//the conjugate
+              Ckl += mag_specB[w]*(ek[w]*el[w]).real();
+            }
+            P_raw[k+l*ntaps] = Ckl*scale_w;
+          }
+        }
+
+        Eigen::Map< Eigen::MatrixXd > mapP( &P_raw[0], ntaps, ntaps );
+        Eigen::MatrixXd P = mapP;
+
+        Eigen::MatrixXd Pinv = P.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(
+                      Eigen::MatrixXd::Identity(ntaps,ntaps));
+
+        std::vector<double> matrix(Pinv.data(), Pinv.data()+Pinv.size());
+
+        //std::cout << "Error = " << (Pinv*P - Eigen::MatrixXd::Identity(ntaps,ntaps)).norm()
+        //    / Eigen::MatrixXd::Identity(ntaps,ntaps).norm() << std::endl;
+
+
+        return matrix;
+      }
+      else{
+        std::vector<double> matrix(0);
+        return matrix;
+      }
+    }
+
+    std::vector<double>
+    tap_gen::get_aug_lms_frac_delay_p(double sampling_freq, double pass_freq,
+                         double fractional_delay, double interp,
+                         const std::vector<float> &proto, int resolution)
+    {
+      int ntaps = proto.size();
+      int N = ntaps-1;
+      if(N){
+        double alpha = pass_freq/sampling_freq;
+        double center;int offset;
+        double fd = std::fmod(fractional_delay,1.0)*interp;
+        if(N%2){//odd
+          center = double(N-1)/2.;
+          offset = (N-1)/2;
+        }
+        else{//even
+          center = double(N)/2.;
+          offset = N/2;
+        }
+
+        double D = center + fd;
+
+        std::vector<float> prototaps( proto.begin(), proto.end() );
+        double p2(0.);
+        for(size_t n = 0; n < ntaps; n++){
+          p2 += prototaps[n]*prototaps[n];
+        }
+        double scaleP = std::sqrt(1./p2);
+        for(size_t n = 0; n < ntaps; n++){
+          prototaps[n] *= scaleP;
+        }
+
+        int nbins = resolution*ntaps;
+        gr::fft::fft_complex* to_spec = new gr::fft::fft_complex(nbins, true);
+
+        complexf *ib1 = to_spec->get_inbuf();
+        complexf *ob1 = to_spec->get_outbuf();
+
+        memset( ib1, 0, nbins*sizeof(complexf) );
+        memset( ob1, 0, nbins*sizeof(complexf) );
+
+        std::vector<double> mag_spec0(nbins);
+        std::vector<double> mag_specA(nbins);
+
+        for(size_t idx = 0; idx < ntaps; idx++){
+          ib1[idx] = complexf(prototaps[idx],0.);
+        }
+        to_spec->execute();
+
+        for(size_t idx = 0; idx < nbins; idx++){
+          mag_spec0[idx] = double((ob1[idx]*std::conj(ob1[idx])).real());
+        }
+
+        ///////////fft shift needed
+        size_t pointA = int(std::ceil(float(nbins)/2.));
+        memcpy( &mag_specA[0], &mag_spec0[pointA], (nbins-pointA)*sizeof(double) );
+        memcpy( &mag_specA[pointA], &mag_spec0[0], (pointA)*sizeof(double) );
+        ///////////
+
+        double incrmt = (2*M_PI - 1./double(nbins))/double(nbins-1);
+        std::vector<double> omegaA(nbins,0.);
+        for(size_t idx = 0; idx < nbins; idx++){
+          omegaA[idx] = -M_PI + double(idx)*(incrmt);
+        }
+
+        int start_at = int(std::max(0.,
+                      round(double(nbins)*(1.-2*alpha)/2.)));
+        int end_at = int(std::min(double(nbins),
+                      round(double(nbins)*(1.-(1.-2*alpha)/2.))));//one shy
+
+        std::vector<double> omegaB( omegaA.begin()+start_at, omegaA.begin()+end_at );
+        std::vector<double> mag_specB( mag_specA.begin()+start_at, mag_specA.begin()+end_at );
+
+        int chk = omegaB.size();
+        std::vector<complexd> Hid(chk);
+        std::vector<double> c(chk);
+        std::vector<double> s(chk);
+        for(size_t idx = 0; idx < chk; idx++){
+          Hid[idx] = std::exp(complexd(0.,-omegaB[idx]*D));
+        }
+
+        std::vector<double> p_raw(ntaps);
+
+        double Ckl(0.),pk(0.),scale_w(1./double(chk));
+        for(int k = 0; k < ntaps; k++){
+          pk = 0.;
+          for(size_t w = 0; w < chk; w++){
+            c[w] = std::cos(k*omegaB[w]);
+            s[w] = std::sin(k*omegaB[w]);
+            pk += mag_specB[w]*(Hid[w].real()*c[w]-Hid[w].imag()*s[w]);
+          }
+          p_raw[k] = pk*scale_w;
+        }
+
+        Eigen::Map< Eigen::VectorXd > mapp( &p_raw[0], ntaps );
+        Eigen::VectorXd p = mapp;
+
+        std::vector<double> augmentor( p.data(), p.data()+p.size() );
+        double m2(0.);
+        for(size_t n = 0; n < ntaps; n++){
+          m2 += augmentor[n]*augmentor[n];
+        }
+
+        double scaleM = std::sqrt(1./m2);
+        for(size_t n = 0; n < ntaps; n++){
+          augmentor[n] *= scaleM;
+        }
+        delete to_spec;
+
+        return augmentor;
+      }
+      else{
+        std::vector<double> taps(0);
+        return taps;
+      }
+    }
+
+    std::vector<float>
+    tap_gen::augment_lms_updatable(double gain,
+                                    const std::vector<float> &proto,
+                                    const std::vector<double> &Pinv_raw,
+                                    const std::vector<double> &p_raw)
+    {
+      size_t ntaps = proto.size();
+      int N = ntaps-1;
+      if((N)&&(p_raw.size() == ntaps)&&(Pinv_raw.size() == ntaps*ntaps)){
+        int offset;
+        if(N%2){//odd
+          offset = (N-1)/2;
+        }
+        else{//even
+          offset = N/2;
+        }
+        Eigen::Map< const Eigen::MatrixXd > mapPinv( &Pinv_raw[0], ntaps, ntaps );
+        Eigen::MatrixXd Pinv = mapPinv;
+        Eigen::Map< const Eigen::VectorXd > mapp( &p_raw[0], ntaps );
+        Eigen::VectorXd p = mapp;
+
+        Eigen::VectorXd x = Pinv*p;
+        std::vector<double> x_raw( x.data(), x.data() + x.size() );
+        std::vector<float> augmentor( x_raw.begin(), x_raw.end() );
+        double m2(0.);
+        for(size_t n = 0; n < ntaps; n++){
+          m2 += augmentor[n]*augmentor[n];
+        }
+
+        double scaleM = std::sqrt(1./m2);
+        for(size_t n = 0; n < ntaps; n++){
+          augmentor[n] *= scaleM;
+        }
+
+        std::vector<float> prototaps( proto.begin(), proto.end() );
+        double p2(0.);
+        for(size_t n = 0; n < ntaps; n++){
+          p2 += prototaps[n]*prototaps[n];
+        }
+        double scaleP = std::sqrt(1./p2);
+        for(size_t n = 0; n < ntaps; n++){
+          prototaps[n] *= scaleP;
+        }
+
+        std::vector<float> conv( 2*ntaps-1, 0. );
+        std::vector<float> taps( ntaps, 0. );
+        double t2(0.);
+        for(int idx = 0; idx < conv.size(); idx++){
+          if(idx < ntaps){
+            for(int m = 0; m <= idx; m++){
+              conv[idx] += prototaps[m] * augmentor[idx-m];
+            }
+          }
+          else{
+            for(int m = idx-(ntaps-1); m < ntaps; m++){
+              conv[idx] += prototaps[m] * augmentor[idx-m];
+            }
+          }
+        }
+        memcpy( &taps[0], &conv[offset], ntaps*sizeof(float) );
+        for(size_t idx = 0; idx < taps.size(); idx++){
+          t2 += taps[idx]*taps[idx];
+        }
+
+        double scaleT = std::sqrt(gain/t2);
+        for(size_t idx = 0; idx < taps.size(); idx++){
+          taps[idx] *= scaleT;
+        }
+        return taps;
+
       }
       else{
         std::vector<float> taps(0);

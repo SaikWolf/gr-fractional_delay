@@ -91,6 +91,22 @@ namespace gr {
                   const std::vector<float> &proto, int resolution);
 
 
+      static std::vector<double>
+      get_aug_lms_Pinv_matrix(double sampling_freq, double pass_freq,
+                              const std::vector<float> &proto, int resolution);
+
+      static std::vector<double>
+      get_aug_lms_frac_delay_p(double sampling_freq, double pass_freq,
+                           double fractional_delay, double interp,
+                           const std::vector<float> &proto, int resolution);
+
+      static std::vector<float>
+      augment_lms_updatable(double gain,
+                            const std::vector<float> &proto,
+                            const std::vector<double> &Pinv_raw,
+                            const std::vector<double> &p_raw);
+
+
     };
   }
 }
