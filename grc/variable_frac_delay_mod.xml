@@ -1,0 +1,177 @@
+<block>
+  <name>Fractional Delay Modifier</name>
+  <key>variable_frac_delay_mod</key>
+  <category>[SaikWolf]/Fractional Delay</category>
+  <import>from fractional_delay import fd_struct</import>
+  <import>from gnuradio.filter import firdes</import>
+  <var_make>fd_struct()
+self.$(id).update($mode,$gain,$rate_in,$rate_out,$xper,$ntaps,$fd,$order,$win,$proto,$res)#raw
+print #end raw $mode</var_make>
+  <var_value>fd_struct()</var_value>
+  <make></make>
+  <callback>update(mode=$mode)</callback>
+  <callback>update(gain=$gain)</callback>
+  <callback>update(rate_in=$rate_in)</callback>
+  <callback>update(rate_out=$rate_out)</callback>
+  <callback>update(xper=$xper)</callback>
+  <callback>update(ntaps=$ntaps)</callback>
+  <callback>update(fd=$fd)</callback>
+  <callback>update(order=$order)</callback>
+  <callback>update(win=$win)</callback>
+  <callback>update(proto=$proto)</callback>
+  <callback>update(res=$res)</callback>
+  <param>
+    <name>Tap Mode</name>
+    <key>mode</key>
+    <value>0</value>
+    <type>enum</type>
+    <hide>none</hide>
+    <option>
+      <name>Sinc</name>
+      <key>0</key>
+    </option>
+    <option>
+      <name>Sinc Interp</name>
+      <key>1</key>
+    </option>
+    <option>
+      <name>Sinc Spline Interp</name>
+      <key>2</key>
+    </option>
+    <option>
+      <name>Lagrange Interp</name>
+      <key>3</key>
+    </option>
+    <option>
+      <name>GLS Set Once</name>
+      <key>4</key>
+    </option>
+    <option>
+      <name>GLS Updatable</name>
+      <key>5</key>
+    </option>
+    <option>
+      <name>Augment Sinc</name>
+      <key>6</key>
+    </option>
+    <option>
+      <name>Augment Dirichlet</name>
+      <key>7</key>
+    </option>
+    <option>
+      <name>Augment LMS Set Once</name>
+      <key>8</key>
+    </option>
+    <option>
+      <name>Augment LMS Updatable</name>
+      <key>9</key>
+    </option>
+  </param>
+  <param>
+    <name>Fractional Delay</name>
+    <key>fd</key>
+    <value>0.</value>
+    <type>real</type>
+    <hide>none</hide>
+  </param>
+  <param>
+    <name>Gain</name>
+    <key>gain</key>
+    <value>1.</value>
+    <type>real</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Rate In</name>
+    <key>rate_in</key>
+    <value>1.</value>
+    <type>real</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Rate Out</name>
+    <key>rate_out</key>
+    <value>2.</value>
+    <type>real</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Additional Percentage Buffer</name>
+    <key>xper</key>
+    <value>20.</value>
+    <type>real</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Number of taps</name>
+    <key>ntaps</key>
+    <value>21</value>
+    <type>int</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Spline Order</name>
+    <key>order</key>
+    <value>3</value>
+    <type>int</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Window</name>
+    <key>win</key>
+    <value>5</value>
+    <type>enum</type>
+    <hide>part</hide>
+    <option>
+      <name>Hamming</name>
+      <key>0</key>
+    </option>
+    <option>
+      <name>Hann</name>
+      <key>1</key>
+    </option>
+    <option>
+      <name>Blackman</name>
+      <key>2</key>
+    </option>
+    <option>
+      <name>Rectangular</name>
+      <key>3</key>
+    </option>
+    <option>
+      <name>Blackman harris</name>
+      <key>5</key>
+    </option>
+    <option>
+      <name>Bartlett</name>
+      <key>6</key>
+    </option>
+    <option>
+      <name>Flattop</name>
+      <key>7</key>
+    </option>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Prototype</name>
+    <key>proto</key>
+    <value>firdes.root_raised_cosine(1,2,1,0.35,23)</value>
+    <type>float_vector</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+  <param>
+    <name>Resolution</name>
+    <key>res</key>
+    <value>2</value>
+    <type>int</type>
+    <hide>part</hide>
+    <tab>Parameters</tab>
+  </param>
+</block>

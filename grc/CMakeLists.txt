@@ -17,5 +17,6 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 install(FILES
+    variable_frac_delay_mod.xml
     DESTINATION share/gnuradio/grc/blocks
 )

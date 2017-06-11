@@ -32,7 +32,8 @@ GR_PYTHON_INSTALL(
     FILES
     __init__.py
     tap_augmentor.py
-    tap_generator.py DESTINATION ${GR_PYTHON_DIR}/fractional_delay
+    tap_generator.py
+    tap_maker.py DESTINATION ${GR_PYTHON_DIR}/fractional_delay
 )
 
 ########################################################################

@@ -40,18 +40,18 @@ class tap_generator:
     return taps
 
   @staticmethod
-  def gen_gls_frac_delay(gain=1.,samp_rate=1.,pass_freq=0.3,ntaps=21,fd=0.):
-    taps = TG.gls_approx(gain,samp_rate,pass_freq,ntaps,fd)
+  def gen_gls_frac_delay(gain=1.,xper=30.,ntaps=21,fd=0.):
+    taps = TG.gls_approx(gain,1.,xper/100.,ntaps,fd)
     return list(taps)
 
   @staticmethod
-  def gen_gls_updatable(gain=1.,samp_rate=1.,pass_freq=0.3,ntaps=21,fd=0.,Pinv=None):
+  def gen_gls_updatable(gain=1.,xper=30.,ntaps=21,fd=0.,Pinv=None):
     ret_pinv = False
     if(Pinv is None):
       ret_pinv = True
-      Pinv = TG.get_gls_Pinv_matrix(samp_rate,pass_freq,ntaps)
+      Pinv = TG.get_gls_Pinv_matrix(1.,xper/100.,ntaps)
 
-    p = TG.get_gls_frac_delay_p(samp_rate,pass_freq,ntaps,fd)
+    p = TG.get_gls_frac_delay_p(1.,xper/100.,ntaps,fd)
     taps = TG.gls_updatable(gain,ntaps,Pinv,p)
     if(ret_pinv):
       return (list(taps),list(Pinv))
