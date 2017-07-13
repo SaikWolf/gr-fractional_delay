@@ -37,6 +37,7 @@ endif(NOT fractional_delay_sources)
 add_library(gnuradio-fractional_delay SHARED ${fractional_delay_sources})
 target_link_libraries(gnuradio-fractional_delay ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
 set_target_properties(gnuradio-fractional_delay PROPERTIES DEFINE_SYMBOL "gnuradio_fractional_delay_EXPORTS")
+add_definitions(-DEIGEN_DONT_PARALLELIZE)
 
 if(APPLE)
     set_target_properties(gnuradio-fractional_delay PROPERTIES
