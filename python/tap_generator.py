@@ -2,6 +2,7 @@
 
 from . import tap_gen as TG
 from gnuradio.fft import window as W
+import numpy as np
 from numpy import sinc
 
 class tap_generator:
